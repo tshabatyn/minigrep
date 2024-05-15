@@ -12,23 +12,31 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use std::env;
-use std::process;
-use minigrep::Config;
+use std::error::Error;
+use std::fs;
 
-fn main() {
-    let args: Vec<String> = env::args().collect::<Vec<String>>();
+pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
+    let contents = fs::read_to_string(config.filename)?;
 
-    let config = Config::new(&args).unwrap_or_else(|err| {
-        eprintln!("Problem parsing arguments: {}", err);
-        process::exit(1);
-    });
+    println!("With text:\n{}", contents);
 
-    println!("Searching for {}", config.query);
-    println!("In file {}", config.filename);
+    Ok(())
+}
 
-    if let Err(e) = minigrep::run(config) {
-        eprintln!("Application error: {}", e);
-        process::exit(1);
+pub struct Config {
+    pub query: String,
+    pub filename: String,
+}
+
+impl Config {
+    pub fn new(args: &[String]) -> Result<Config, &str> {
+        if args.len() < 3 {
+            return Err("Not enough arguments");
+        }
+
+        let query = args[1].clone();
+        let filename = args[2].clone();
+
+        Ok(Config { query, filename })
     }
 }
